@@ -1,3 +1,4 @@
+///|
 let ref_pool : Ref[Map[String, Schema]] = Ref::new({})
 
 ///|
@@ -21,7 +22,7 @@ pub fn parse!(json : Json) -> Schema!SchemaParseError {
   match json.value("type") {
     Some(String(str)) => schema.typ = Left(str)
     Some(Array(arr1)) => {
-      let arr2 = arr1.map_option(fn(v) { v.as_string() })
+      let arr2 = arr1.filter_map(fn(v) { v.as_string() })
       if arr1.length() != arr2.length() {
         raise InvalidSchema
       }
@@ -196,7 +197,7 @@ pub fn parse!(json : Json) -> Schema!SchemaParseError {
       for k, v in obj {
         match v.as_array() {
           Some(arr) => {
-            let arr2 = arr.map_option(fn(v) { v.as_string() })
+            let arr2 = arr.filter_map(fn(v) { v.as_string() })
             if arr.length() != arr2.length() {
               raise InvalidSchema
             }

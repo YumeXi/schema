@@ -1,7 +1,7 @@
 // NOTE: The whole implementation temporarily assumes that the input is valid at now, except for the unsafe functions.
 
 ///|
-pub fn JsonPointer::parse_pointer(str : String) -> JsonPointer {
+pub fn parse_pointer(str : String) -> JsonPointer {
   let str = str.trim_space()
   if str == "" {
     // raise InvalidPath(src=str)
@@ -15,8 +15,8 @@ pub fn JsonPointer::parse_pointer(str : String) -> JsonPointer {
 }
 
 ///| @alert unsafe "Panic if invalid invalid string received"
-pub fn JsonPointer::unsafe_parse_abosulute_pointer(str : String) -> JsonPointer {
-  guard str.is_blank().not() else { panic() }
+pub fn unsafe_parse_abosulute_pointer(str : String) -> JsonPointer {
+  guard not(str.is_blank())
   let root = match str.index_of("#") {
     -1 => 0
     i => i
@@ -26,8 +26,8 @@ pub fn JsonPointer::unsafe_parse_abosulute_pointer(str : String) -> JsonPointer 
 }
 
 ///| @alert unsafe "Panic if invalid invalid string received"
-pub fn JsonPointer::unsafe_parse_relative_pointer(str : String) -> JsonPointer {
-  guard str.is_blank().not() else { panic() }
+pub fn unsafe_parse_relative_pointer(str : String) -> JsonPointer {
+  guard not(str.is_blank())
   RelativePointer(str.split("/").collect())
 }
 
@@ -77,20 +77,13 @@ pub fn resolve_value(self : JsonPointer, json : Json) -> Json!Error {
 }
 
 ///|
-pub impl Show for JsonPointer with output(self : JsonPointer, logger : Logger) -> Unit {
+pub impl Show for JsonPointer with output(self, logger) -> Unit {
   match self {
     AbsolutePointer(id~, path) => {
-      logger.write_string(id)
-      logger.write_string(String::concat(path, separator="/"))
+      Logger::write_string(logger, id)
+      Logger::write_string(logger, String::concat(path, separator="/"))
     }
     RelativePointer(path) =>
-      logger.write_string(String::concat(path, separator="/"))
+      Logger::write_string(logger, String::concat(path, separator="/"))
   }
-}
-
-///|
-pub fn to_string(self : JsonPointer) -> String {
-  let logger = StringBuilder::new()
-  Show::output(self, logger)
-  logger.to_string()
 }

@@ -41,23 +41,19 @@ test "validate array" {
     keywords: {
       "items": {
         name: "items",
-        data: Items(
-          {
-            typ: Left("string"),
-            keywords: {
-              "enum": { data: @lib.Enum(["1", "2", "3", "4"]), name: "enum" },
-            },
+        data: Items({
+          typ: Left("string"),
+          keywords: {
+            "enum": { data: @lib.Enum(["1", "2", "3", "4"]), name: "enum" },
           },
-        ),
+        }),
       },
       "prefixItems": {
         name: "prefixItems",
-        data: PrefixItems(
-          [
-            { typ: Left("number"), keywords: {} },
-            { typ: Left("number"), keywords: {} },
-          ],
-        ),
+        data: PrefixItems([
+          { typ: Left("number"), keywords: {} },
+          { typ: Left("number"), keywords: {} },
+        ]),
       },
     },
   }
@@ -101,7 +97,7 @@ test "validate array contains" {
 test "validate number" {
   let s : @lib.Schema = {
     typ: @utils.Left("number"),
-    keywords: @lib.of([@lib.ExclusiveMaximum(12), @lib.Minimum(1)]),
+    keywords: @lib.Keyword::of([@lib.ExclusiveMaximum(12), @lib.Minimum(1)]),
   }
   assert_ok!(s.validate(11))
   assert_err!(s.validate(0))
@@ -146,29 +142,25 @@ test "validate object additionalProperties" {
       "required": { name: "required", data: Required(["name", "age"]) },
       "properties": {
         name: "properties",
-        data: Properties(
-          {
-            "name": { typ: Left("string"), keywords: {} },
-            "age": { typ: Left("number"), keywords: {} },
-          },
-        ),
+        data: Properties({
+          "name": { typ: Left("string"), keywords: {} },
+          "age": { typ: Left("number"), keywords: {} },
+        }),
       },
       "additionalProperties": {
         name: "additionalProperties",
         data: AdditionalProperties(
-          Right(
-            {
-              typ: Left("object"),
-              keywords: {
-                "properties": {
-                  name: "properties",
-                  data: Properties(
-                    { "test": { typ: Left("string"), keywords: {} } },
-                  ),
-                },
+          Right({
+            typ: Left("object"),
+            keywords: {
+              "properties": {
+                name: "properties",
+                data: Properties({
+                  "test": { typ: Left("string"), keywords: {} },
+                }),
               },
             },
-          ),
+          }),
         ),
       },
     },
@@ -188,13 +180,11 @@ test "validate object dependencies" {
     keywords: {
       "properties": {
         name: "properties",
-        data: Properties(
-          {
-            "name": { typ: Left("string"), keywords: {} },
-            "age": { typ: Left("number"), keywords: {} },
-            "identity": { typ: Left("string"), keywords: {} },
-          },
-        ),
+        data: Properties({
+          "name": { typ: Left("string"), keywords: {} },
+          "age": { typ: Left("number"), keywords: {} },
+          "identity": { typ: Left("string"), keywords: {} },
+        }),
       },
       "dependentRequired": {
         name: "dependentRequired",
@@ -216,30 +206,26 @@ test "validate object dependencies" {
     keywords: {
       "properties": {
         name: "properties",
-        data: Properties(
-          {
-            "name": { typ: Left("string"), keywords: {} },
-            "age": { typ: Left("number"), keywords: {} },
-          },
-        ),
+        data: Properties({
+          "name": { typ: Left("string"), keywords: {} },
+          "age": { typ: Left("number"), keywords: {} },
+        }),
       },
       "dependentSchemas": {
         name: "dependentSchemas",
-        data: DependentSchemas(
-          {
-            "name": {
-              typ: Left("object"),
-              keywords: {
-                "properties": {
-                  name: "properties",
-                  data: Properties(
-                    { "identity": { typ: Left("string"), keywords: {} } },
-                  ),
-                },
+        data: DependentSchemas({
+          "name": {
+            typ: Left("object"),
+            keywords: {
+              "properties": {
+                name: "properties",
+                data: Properties({
+                  "identity": { typ: Left("string"), keywords: {} },
+                }),
               },
             },
           },
-        ),
+        }),
       },
     },
   }
@@ -264,17 +250,13 @@ test "validate composition" {
     keywords: {
       "anyOf": {
         name: "anyOf",
-        data: AnyOf(
-          [
-            { typ: Left("boolean"), keywords: {} },
-            {
-              typ: Left("number"),
-              keywords: {
-                "minimum": { data: @lib.Minimum(10), name: "minimum" },
-              },
-            },
-          ],
-        ),
+        data: AnyOf([
+          { typ: Left("boolean"), keywords: {} },
+          {
+            typ: Left("number"),
+            keywords: { "minimum": { data: @lib.Minimum(10), name: "minimum" } },
+          },
+        ]),
       },
     },
   }
@@ -286,36 +268,30 @@ test "validate composition" {
     keywords: {
       "allOf": {
         name: "allOf",
-        data: AllOf(
-          [
-            {
-              typ: Left("object"),
-              keywords: {
-                "properties": {
-                  name: "properties",
-                  data: Properties(
-                    {
-                      "name": { typ: Left("string"), keywords: {} },
-                      "age": { typ: Left("number"), keywords: {} },
-                    },
-                  ),
-                },
+        data: AllOf([
+          {
+            typ: Left("object"),
+            keywords: {
+              "properties": {
+                name: "properties",
+                data: Properties({
+                  "name": { typ: Left("string"), keywords: {} },
+                  "age": { typ: Left("number"), keywords: {} },
+                }),
               },
             },
-            {
-              typ: Left(""),
-              keywords: {
-                "properties": {
-                  name: "properties",
-                  data: Properties(
-                    { "id": { typ: Left("string"), keywords: {} } },
-                  ),
-                },
-                "required": { name: "required", data: Required(["id"]) },
+          },
+          {
+            typ: Left(""),
+            keywords: {
+              "properties": {
+                name: "properties",
+                data: Properties({ "id": { typ: Left("string"), keywords: {} } }),
               },
+              "required": { name: "required", data: Required(["id"]) },
             },
-          ],
-        ),
+          },
+        ]),
       },
     },
   }
@@ -326,58 +302,35 @@ test "validate composition" {
 test "validate condition" {
   let s1 : @lib.Schema = {
     typ: Left("object"),
-    keywords: @lib.of(
-      [
-        If(
-          {
-            typ: Left("object"),
-            keywords: @lib.of(
-              [
-                Properties(
-                  {
-                    "cond": { typ: Left(""), keywords: @lib.of([Const(true)]) },
-                  },
-                ),
-              ],
-            ),
-          },
-        ),
-        Then(
-          {
-            typ: Left("object"),
-            keywords: @lib.of(
-              [
-                Properties(
-                  {
-                    "value": {
-                      typ: Left("string"),
-                      keywords: @lib.of([Const("True")]),
-                    },
-                  },
-                ),
-              ],
-            ),
-          },
-        ),
-        Else(
-          {
-            typ: Left("object"),
-            keywords: @lib.of(
-              [
-                Properties(
-                  {
-                    "value": {
-                      typ: Left("string"),
-                      keywords: @lib.of([Const("False")]),
-                    },
-                  },
-                ),
-              ],
-            ),
-          },
-        ),
-      ],
-    ),
+    keywords: @lib.Keyword::of([
+      If({
+        typ: Left("object"),
+        keywords: @lib.Keyword::of([
+          Properties({
+            "cond": { typ: Left(""), keywords: @lib.Keyword::of([Const(true)]) },
+          }),
+        ]),
+      }),
+      Then({
+        typ: Left("object"),
+        keywords: @lib.Keyword::of([
+          Properties({
+            "value": { typ: Left("string"), keywords: @lib.Keyword::of([Const("True")]) },
+          }),
+        ]),
+      }),
+      Else({
+        typ: Left("object"),
+        keywords: @lib.Keyword::of([
+          Properties({
+            "value": {
+              typ: Left("string"),
+              keywords: @lib.Keyword::of([Const("False")]),
+            },
+          }),
+        ]),
+      }),
+    ]),
   }
   assert_ok!(s1.validate({ "cond": True, "value": "True" }))
   assert_ok!(s1.validate({ "cond": False, "value": "False" }))

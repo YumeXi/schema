@@ -10,7 +10,7 @@ pub fn is_unsigned_integer(str : String) -> Bool {
     _ => ()
   }
   loop view {
-    ['1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '0', .. as rest] =>
+    ['1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '0', .. rest] =>
       continue rest
     [] => break true
     _ => break false
@@ -33,7 +33,7 @@ pub fn is_integer(str : String) -> Bool {
     _ => ()
   }
   loop view {
-    ['1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '0', .. as rest] =>
+    ['1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '0', .. rest] =>
       continue rest
     [] => break true
     _ => break false

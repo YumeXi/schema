@@ -36,10 +36,10 @@ test "resolve_value" {
   let obj : Json = {
     "foo": { "bar": 124, "baz": { "qux": 568, "qzx": "hello" } },
   }
-  assert_eq!(
-    @lib.parse_pointer("#/foo").resolve_value!(obj),
-    { "baz": { "qux": 568, "qzx": "hello" }, "bar": 124 },
-  )
+  assert_eq!(@lib.parse_pointer("#/foo").resolve_value!(obj), {
+    "baz": { "qux": 568, "qzx": "hello" },
+    "bar": 124,
+  })
   assert_eq!(@lib.parse_pointer("#/foo/bar").resolve_value!(obj), 124)
   assert_eq!(@lib.parse_pointer("#/foo/baz/qux").resolve_value!(obj), 568)
   assert_eq!(@lib.parse_pointer("#/foo/baz/qzx").resolve_value!(obj), "hello")
