@@ -4,13 +4,11 @@ pub fn validate(self : Schema, json : Json) -> Result[Unit, ValidateError] {
     match validate_type(self.typ, json) {
       Some(typ) =>
         return Err(
-          ValidateError(
-            {
-              stack: ["<\{typ}>"],
-              expected: { name: "type", data: Type(self.typ) },
-              received: Some(json),
-            },
-          ),
+          ValidateError({
+            stack: ["<\{typ}>"],
+            expected: { name: "type", data: Type(self.typ) },
+            received: Some(json),
+          }),
         )
       None => ()
     }
@@ -35,21 +33,19 @@ pub fn validate(self : Schema, json : Json) -> Result[Unit, ValidateError] {
           Ok(_) => ()
           Err(err) =>
             return Err(
-              ValidateError(
-                {
-                  ..err,
-                  stack: [
-                    "<array>",
-                    ..if err.stack.is_empty() {
-                      ["<:\{def.name}>"]
-                    } else {
-                      err.stack
-                    },
-                  ],
-                  expected: def,
-                  received: Some(json),
-                },
-              ),
+              ValidateError({
+                ..err,
+                stack: [
+                  "<array>",
+                  ..if err.stack.is_empty() {
+                    ["<:\{def.name}>"]
+                  } else {
+                    err.stack
+                  },
+                ],
+                expected: def,
+                received: Some(json),
+              }),
             )
         }
       } else {
@@ -61,14 +57,12 @@ pub fn validate(self : Schema, json : Json) -> Result[Unit, ValidateError] {
           Ok(_) => ()
           Err(err) =>
             return Err(
-              ValidateError(
-                {
-                  ..err,
-                  stack: ["<number>", "<:\{def.name}>"],
-                  expected: def,
-                  received: Some(json),
-                },
-              ),
+              ValidateError({
+                ..err,
+                stack: ["<number>", "<:\{def.name}>"],
+                expected: def,
+                received: Some(json),
+              }),
             )
         }
       } else {
@@ -80,14 +74,12 @@ pub fn validate(self : Schema, json : Json) -> Result[Unit, ValidateError] {
           Ok(_) => ()
           Err(err) =>
             return Err(
-              ValidateError(
-                {
-                  ..err,
-                  stack: ["<string>", "<:\{def.name}>"],
-                  expected: def,
-                  received: Some(json),
-                },
-              ),
+              ValidateError({
+                ..err,
+                stack: ["<string>", "<:\{def.name}>"],
+                expected: def,
+                received: Some(json),
+              }),
             )
         }
       } else {
@@ -99,14 +91,12 @@ pub fn validate(self : Schema, json : Json) -> Result[Unit, ValidateError] {
           Ok(_) => ()
           Err(err) =>
             return Err(
-              ValidateError(
-                {
-                  ..err,
-                  stack: ["<object>", ..err.stack],
-                  expected: def,
-                  received: Some(json),
-                },
-              ),
+              ValidateError({
+                ..err,
+                stack: ["<object>", ..err.stack],
+                expected: def,
+                received: Some(json),
+              }),
             )
         }
       } else {
@@ -122,12 +112,12 @@ fn validate_type(
 ) -> String? {
   match
     (match either {
-      Left("number") => json.as_number().is_empty().not()
-      Left("string") => json.as_string().is_empty().not()
-      Left("object") => json.as_object().is_empty().not()
-      Left("array") => json.as_array().is_empty().not()
-      Left("boolean") => json.as_bool().is_empty().not()
-      Left("null") => json.as_null().is_empty().not()
+      Left("number") => not(json.as_number().is_empty())
+      Left("string") => not(json.as_string().is_empty())
+      Left("object") => not(json.as_object().is_empty())
+      Left("array") => not(json.as_array().is_empty())
+      Left("boolean") => not(json.as_bool().is_empty())
+      Left("null") => not(json.as_null().is_empty())
       Left(_) => panic()
       Right(_) => false // TODO: implement type checking for mutiple types
     }) {
@@ -146,10 +136,12 @@ fn validate_generic(self : Schema, json : Json) -> Result[Unit, ErrorData] {
     Some(def) =>
       match def.data {
         Enum(values) =>
-          if values.contains(json).not() {
-            return Err(
-              { stack: ["<:enum>"], expected: def, received: Some(json) },
-            )
+          if not(values.contains(json)) {
+            return Err({
+              stack: ["<:enum>"],
+              expected: def,
+              received: Some(json),
+            })
           }
         _ => panic()
       }
@@ -160,9 +152,11 @@ fn validate_generic(self : Schema, json : Json) -> Result[Unit, ErrorData] {
       match def.data {
         Const(value) =>
           if json != value {
-            return Err(
-              { stack: ["<:const>"], expected: def, received: Some(json) },
-            )
+            return Err({
+              stack: ["<:const>"],
+              expected: def,
+              received: Some(json),
+            })
           } else {
             Ok(())
           }
@@ -204,69 +198,60 @@ fn validate_array(
             match schema.validate(item) {
               Ok(_) => ()
               Err(err) =>
-                return Err(
-                  {
-                    ..err._,
-                    stack: [i.to_string(), ..err.stack],
-                    expected: self,
-                    received: Some(item),
-                  },
-                )
+                return Err({
+                  ..err._,
+                  stack: [i.to_string(), ..err.stack],
+                  expected: self,
+                  received: Some(item),
+                })
             }
           None =>
-            return Err(
-              { stack: [i.to_string()], expected: self, received: None },
-            )
+            return Err({
+              stack: [i.to_string()],
+              expected: self,
+              received: None,
+            })
         }
       } else {
         Ok(())
       }
     Items(schema) => {
-      let start = parent.keywords["prefixItems"].map_or(
-        arr.length(),
-        fn(keyword) {
-          match keyword.data {
-            PrefixItems(schemas) => schemas.length()
-            _ => panic()
-          }
-        },
-      )
+      let start = parent.keywords["prefixItems"].map_or(arr.length(), fn(
+        keyword
+      ) {
+        match keyword.data {
+          PrefixItems(schemas) => schemas.length()
+          _ => panic()
+        }
+      })
       for i, item in arr[start:] {
         match schema.validate(item) {
           Ok(_) => ()
           Err(err) =>
-            return Err(
-              {
-                ..err._,
-                stack: [i.to_string(), ..err.stack],
-                expected: self,
-                received: Some(item),
-              },
-            )
+            return Err({
+              ..err._,
+              stack: [i.to_string(), ..err.stack],
+              expected: self,
+              received: Some(item),
+            })
         }
       } else {
         Ok(())
       }
     }
     Contains(schema) => {
-      let min = parent.keywords["minContains"].map_or(
-        None,
-        fn(def) {
-          match def.data {
-            MinContains(min) => Some(min)
-            _ => None
-          }
-        },
-      )
-      let max = parent.keywords["maxContains"].map_or(
-        None,
-        fn(def) {
-          match def.data {
-            MaxContains(max) => Some(max)
-            _ => None
-          }
-        },
-      )
+      let min = parent.keywords["minContains"].map_or(None, fn(def) {
+        match def.data {
+          MinContains(min) => Some(min)
+          _ => None
+        }
+      })
+      let max = parent.keywords["maxContains"].map_or(None, fn(def) {
+        match def.data {
+          MaxContains(max) => Some(max)
+          _ => None
+        }
+      })
       let mut match_count = 0
       for _, item in arr {
         if schema.validate(item).is_ok() {
@@ -278,21 +263,17 @@ fn validate_array(
       } else {
         let min = min.unwrap()
         if min > match_count {
-          Err(
-            {
-              stack: ["<:minContains=\{min}>"],
-              expected: self,
-              received: Some(Number(match_count.to_double())),
-            },
-          )
+          Err({
+            stack: ["<:minContains=\{min}>"],
+            expected: self,
+            received: Some(Number(match_count.to_double())),
+          })
         } else if max.is_empty() && match_count <= max.unwrap() {
-          Err(
-            {
-              stack: ["<:maxContains=\{max}>"],
-              expected: self,
-              received: Some(Number(match_count.to_double())),
-            },
-          )
+          Err({
+            stack: ["<:maxContains=\{max}>"],
+            expected: self,
+            received: Some(Number(match_count.to_double())),
+          })
         } else {
           Ok(())
         }
@@ -350,13 +331,11 @@ fn validate_object(
             match prop.validate(value) {
               Ok(_) => ()
               Err(err) =>
-                return Err(
-                  {
-                    ..err._,
-                    stack: [key, ..err._.stack],
-                    received: Some(value),
-                  },
-                )
+                return Err({
+                  ..err._,
+                  stack: [key, ..err._.stack],
+                  received: Some(value),
+                })
             }
           None => ()
         }
@@ -365,29 +344,28 @@ fn validate_object(
       }
     Required(keys) =>
       for _, key in keys {
-        if obj.contains(key).not() {
+        if not(obj.contains(key)) {
           return Err({ stack: [key], expected: self, received: None })
         }
       } else {
         Ok(())
       }
     AdditionalProperties(either) => {
-      let props = parent.keywords["properties"].map_or(
-        [],
-        fn(def) {
-          match def.data {
-            Properties(props) =>
-              obj.keys().filter(fn(key) { props.contains(key).not() }).collect()
-            _ => panic()
-          }
-        },
-      )
+      let props = parent.keywords["properties"].map_or([], fn(def) {
+        match def.data {
+          Properties(props) =>
+            obj.keys().filter(fn(key) { not(props.contains(key)) }).collect()
+          _ => panic()
+        }
+      })
       either.either(
         fn(additional) {
-          if additional.not() && props.is_empty().not() {
-            Err(
-              { stack: ["<object>", props[0]], expected: self, received: None },
-            )
+          if not(additional) && not(props.is_empty()) {
+            Err({
+              stack: ["<object>", props[0]],
+              expected: self,
+              received: None,
+            })
           } else {
             Ok(())
           }
@@ -398,14 +376,12 @@ fn validate_object(
               match additional.validate(value) {
                 Ok(_) => ()
                 Err(err) =>
-                  return Err(
-                    {
-                      ..err._,
-                      stack: [key, ..err._.stack],
-                      expected: self,
-                      received: Some(value),
-                    },
-                  )
+                  return Err({
+                    ..err._,
+                    stack: [key, ..err._.stack],
+                    expected: self,
+                    received: Some(value),
+                  })
               }
             }
           } else {
@@ -419,20 +395,18 @@ fn validate_object(
         if obj.contains(key) {
           let mut dep : String? = None
           for dependent in dependents {
-            if obj.contains(dependent).not() {
+            if not(obj.contains(dependent)) {
               dep = Some(dependent)
               break
             }
           }
           match dep {
             Some(dep) =>
-              return Err(
-                {
-                  stack: ["<object>", key, "-<:dependentRequired>-", dep],
-                  expected: self,
-                  received: None,
-                },
-              )
+              return Err({
+                stack: ["<object>", key, "-<:dependentRequired>-", dep],
+                expected: self,
+                received: None,
+              })
             None => ()
           }
         }
@@ -445,14 +419,12 @@ fn validate_object(
           match schema.validate(Object(obj)) {
             Ok(_) => ()
             Err(err) =>
-              return Err(
-                {
-                  ..err._,
-                  stack: [key, "-<:dependentSchemas>-", ..err._.stack],
-                  expected: self,
-                  received: Some(Object(obj)),
-                },
-              )
+              return Err({
+                ..err._,
+                stack: [key, "-<:dependentSchemas>-", ..err._.stack],
+                expected: self,
+                received: Some(Object(obj)),
+              })
           }
         }
       } else {
@@ -463,7 +435,7 @@ fn validate_object(
 }
 
 ///|
-fn validate_composition(self : Schema, json : Json) -> Result[Unit, ErrorData] {
+fn Schema::validate_composition(self : Schema, json : Json) -> Result[Unit, ErrorData] {
   match self.keywords["allOf"] {
     Some(def) =>
       match def.validate_composition(json) {
@@ -500,21 +472,19 @@ fn validate_composition(self : Schema, json : Json) -> Result[Unit, ErrorData] {
 }
 
 ///|
-fn validate_composition(self : Keyword, json : Json) -> Result[Unit, ErrorData] {
+fn Keyword::validate_composition(self : Keyword, json : Json) -> Result[Unit, ErrorData] {
   match self.data {
     AllOf(schemas) =>
       for schema in schemas {
         match schema.validate(json) {
           Ok(_) => ()
           Err(err) =>
-            return Err(
-              {
-                ..err._,
-                stack: ["<:allOf>", ..err.stack],
-                expected: self,
-                received: Some(json),
-              },
-            )
+            return Err({
+              ..err._,
+              stack: ["<:allOf>", ..err.stack],
+              expected: self,
+              received: Some(json),
+            })
         }
       } else {
         Ok(())
@@ -533,20 +503,20 @@ fn validate_composition(self : Keyword, json : Json) -> Result[Unit, ErrorData] 
       for schema in schemas {
         match schema.validate(json) {
           Ok(_) =>
-            if matched.not() {
+            if not(matched) {
               matched = true
             } else {
-              return Err(
-                { stack: ["<:oneOf>"], expected: self, received: Some(json) },
-              )
+              return Err({
+                stack: ["<:oneOf>"],
+                expected: self,
+                received: Some(json),
+              })
             }
           Err(_) => ()
         }
       }
-      if matched.not() {
-        return Err(
-          { stack: ["<:oneOf>"], expected: self, received: Some(json) },
-        )
+      if not(matched) {
+        return Err({ stack: ["<:oneOf>"], expected: self, received: Some(json) })
       } else {
         Ok(())
       }
@@ -585,14 +555,12 @@ fn validate_condition(self : Schema, json : Json) -> Result[Unit, ErrorData] {
               match schema.validate(json) {
                 Ok(_) => Ok(())
                 Err(err) =>
-                  return Err(
-                    {
-                      ..err._,
-                      stack: ["<:then>", ..err._.stack],
-                      expected: def,
-                      received: Some(json),
-                    },
-                  )
+                  return Err({
+                    ..err._,
+                    stack: ["<:then>", ..err._.stack],
+                    expected: def,
+                    received: Some(json),
+                  })
               }
             _ => panic()
           }
@@ -606,18 +574,28 @@ fn validate_condition(self : Schema, json : Json) -> Result[Unit, ErrorData] {
               match schema.validate(json) {
                 Ok(_) => Ok(())
                 Err(err) =>
-                  return Err(
-                    {
-                      ..err._,
-                      stack: ["<:else>", ..err._.stack],
-                      expected: def,
-                      received: Some(json),
-                    },
-                  )
+                  return Err({
+                    ..err._,
+                    stack: ["<:else>", ..err._.stack],
+                    expected: def,
+                    received: Some(json),
+                  })
               }
             _ => panic()
           }
         None => Ok(())
+      }
+    None => Ok(())
+  }
+}
+
+///|
+fn validate_ref(self : Schema, _json : Json) -> Result[Unit, ErrorData] {
+  match self.keywords["$ref"] {
+    Some(def) =>
+      match def.data {
+        Ref(str) => ...
+        _ => panic()
       }
     None => Ok(())
   }
